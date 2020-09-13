@@ -9,6 +9,7 @@ NO_FINAL = 2
 VALOR = 3
 REFP = 3
 REFN = 4
+multiplicadores = {"n":0.000000001, "u":0.000001, "m":0.001, "k":1000, "Meg":1000000}
 
 #vê qual o numero máximo de nós para montar as matrizes
 def conta_nos(lista):
@@ -55,11 +56,15 @@ for i in range(len(netlist)):
     origem = int(netlist[i][NO_INICIAL])
     destino = int(netlist[i][NO_FINAL])
     if (dis == 'R'):
+        if (netlist[i][VALOR][-2] in multiplicadores):
+            netlist[i][VALOR] = float(netlist[i][VALOR][:-2]) * multiplicadores[netlist[i][VALOR][-2]]
         mat_G[origem][origem] += 1/float(netlist[i][VALOR])
         mat_G[origem][destino] += -1/float(netlist[i][VALOR])
         mat_G[destino][origem] += -1/float(netlist[i][VALOR])
         mat_G[destino][destino] += 1/float(netlist[i][VALOR])
     if (dis == 'I'):
+        if (netlist[i][VALOR][-2] in multiplicadores):
+            netlist[i][VALOR] = float(netlist[i][VALOR][:-2]) * multiplicadores[netlist[i][VALOR][-2]]
         mat_i[origem][0] += -float(netlist[i][VALOR])
         mat_i[destino][0] += float(netlist[i][VALOR])
     if(dis == 'G'):
@@ -81,3 +86,4 @@ resultado =  matmul(linalg.inv(mat_G), mat_i)
 print("Resultados---------------------------------------")
 for i in range(len(resultado)):
     print(f'V({i+1}): {resultado[i]} V')
+
