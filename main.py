@@ -7,8 +7,8 @@ DISPOSITIVO = 0
 NO_INICIAL = 1
 NO_FINAL = 2
 VALOR = 3
-REFP = 2
-REFN = 3
+REFP = 3
+REFN = 4
 
 #vê qual o numero máximo de nós para montar as matrizes
 def conta_nos(lista):
@@ -60,7 +60,7 @@ for i in range(len(netlist)):
         mat_G[destino][origem] += -1/float(netlist[i][VALOR])
         mat_G[destino][destino] += 1/float(netlist[i][VALOR])
     if (dis == 'I'):
-        mat_i[0][0] += -float(netlist[i][VALOR])
+        mat_i[origem][0] += -float(netlist[i][VALOR])
         mat_i[destino][0] += float(netlist[i][VALOR])
     if(dis == 'G'):
         referenciaPos = int(netlist[i][REFP])
