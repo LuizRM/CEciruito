@@ -11,22 +11,19 @@ Caso seja necessário montar o circuito manualmente, os padrões são os seguint
 
 **Fonte de corrente DC:**
   I1 <nó de saída de corrente> <nó destino da corrente> <valor da corrente>
-  
+
 **Fonte de corrente controlada DC:**
   G1 <nó de saída de corrente> <nó destino da corrente> <nó de referência> <valor da corrente>
-  
+
 **Capacitor:**
   C1 <nó 1> <nó 2> <valor da capacitância>
-  
+
 **Indutor:**
   L1 <nó 1> <nó 2> <valor da indutância>
-  
-**Transformador:**
-  T1 <nó 1> <nó 2> <nó 3> <nó 4> <indutância nós 1 e 2> <indutância nós 3 e 4> <coeficiente de acoplamento M>
-  
+
 **Fonte de corrente AC:**
-  I1 <nó de saída de corrente> <nó destino da corrente> <amplitude de corrente> 
-  
+  I1 <nó de saída de corrente> <nó destino da corrente> SIN(0 <amplitude de corrente> <frequencia em Hz)
+
 **Exemplo**
 I1 0 1 500m
 R1 2 1 1
