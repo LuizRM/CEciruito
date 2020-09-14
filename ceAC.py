@@ -16,15 +16,18 @@ resistor = {"no+":1, "no-":2, "resistencia":3}
 iS = {"noS": 1, "noE": 2, "corrente":3}
 icDC = {"noS": 1, "noE": 2, "ref+":3, "ref-":4, "transc":5}
 
-#vê qual o numero máximo de nós para montar as matrizes
+#vê qual o numero de nós e guarda seus nomes em um dicionário
 def conta_nos(lista):
-    maximo = 0
+    numero_nos = 0
+    nos = {'0':0}    #cria um dicionário já com o nó 0
     for i in range(len(lista)):
-        if(int(lista[i][NO_INICIAL]) > maximo):
-            maximo = int(lista[i][NO_INICIAL])
-        if(int(lista[i][NO_FINAL]) > maximo):
-            maximo = int(lista[i][NO_FINAL])
-    return maximo
+        if(lista[i][NO_INICIAL] not in nos):
+            numero_nos += 1
+            nos[lista[i][NO_INICIAL]] = numero_nos
+        if(lista[i][NO_FINAL] not in nos):
+            numero_nos += 1
+            nos[lista[i][NO_FINAL]] = numero_nos
+    return numero_nos, nos
 
 def cria_matriz(linhas, colunas):
     matriz = []
@@ -42,6 +45,16 @@ def multiplica(valor):
     else:
         return valor
 
+#verifica se existe alguma fonte senoidal e guarda a frequência
+def encontra_omega(lista):
+    frequencia = 0
+    for i in range(len(lista)):
+        if re.search("^SIN", lista[i][iS["corrente"]]):
+            if netlist[i][-1][-1] == '\n':          #retira o '\n' do final das linhas para evitar erros de leitura
+                netlist[i][-1] = netlist[i][-1][:-1]
+            frequencia = str(lista[i][-1][:-1]) #retira o ')' do final do valor da frequencia
+            frequencia = 2*pi*float(multiplica(frequencia)) #toma a frequencia em radianos
+    return frequencia
 
 #abertura do arquivo com a netlist
 file_name = str(argv[1])
@@ -60,17 +73,17 @@ netlist = file.readlines()
 file.close()
 netlist  = [i.split(' ') for i in netlist]
 
-dimensao = conta_nos(netlist)
-omega = 0
+dimensao, nomes_nos = conta_nos(netlist)
+omega = encontra_omega(netlist)
 mat_G = cria_matriz(dimensao+1,dimensao+1) #adiciona-se 1 para compensar a linha e a coluna 0 serem excluídas
 mat_i = cria_matriz(dimensao+1,1)
 for i in range(len(netlist)):
     if netlist[i][-1][-1] == '\n':          #retira o '\n' do final das linhas para evitar erros de leitura
         netlist[i][-1] = netlist[i][-1][:-1]
-
+        
     dis = netlist[i][DISPOSITIVO]
-    origem = int(netlist[i][NO_INICIAL])
-    destino = int(netlist[i][NO_FINAL])
+    origem = nomes_nos[netlist[i][NO_INICIAL]] #retorna um número correspondente do nó
+    destino = nomes_nos[netlist[i][NO_FINAL]]
     #identificação do tipo de dispostivo e o adiciona às matrizes de acordo com sua estampa
     if (dis[0] == 'R'):
         netlist[i][resistor["resistencia"]] = float(multiplica(netlist[i][resistor["resistencia"]]))
@@ -80,15 +93,13 @@ for i in range(len(netlist)):
         mat_G[destino][destino] += 1/float(netlist[i][resistor["resistencia"]])
     if (dis[0] == 'I'):
         if re.search("^SIN", netlist[i][iS["corrente"]]):
-            omega = str(netlist[i][-1][:-1]) #retira o ')' do final do valor da frequencia
-            omega = 2*pi*float(multiplica(omega)) #toma a frequencia em radianos
             netlist[i][iS["corrente"]] = netlist[i][4]
         netlist[i][iS["corrente"]] = multiplica(netlist[i][iS["corrente"]])
         mat_i[origem][0] += -float(netlist[i][iS["corrente"]])
         mat_i[destino][0] += float(netlist[i][iS["corrente"]])
     if(dis[0] == 'G'):
-        referenciaPos = int(netlist[i][REFP])
-        referenciaNeg = int(netlist[i][REFN])
+        referenciaPos = nomes_nos[netlist[i][REFP]]
+        referenciaNeg = nomes_nos[netlist[i][REFN]]
         mat_G[origem][referenciaPos] += float(netlist[i][icDC["transc"]])
         mat_G[origem][referenciaNeg] += -float(netlist[i][icDC["transc"]])
         mat_G[destino][referenciaPos] += -float(netlist[i][icDC["transc"]])
@@ -118,4 +129,7 @@ if(omega == 0):
         print(f'V({i+1}): {round(resultado[i],4)} V')
 else:
     for i in range(len(resultado)):
-        print(f'V({i+1}): {round(resultado[i].real,3)}sin({round(omega,3)}t) + {round(resultado[i].imag,3)}cos({round(omega,3)}t) V')
+        função = f'V({i+1}): {round(resultado[i].real,3)}sin({round(omega,3)}t)'
+        if (resultado[i].imag != 0.0):
+            função +=  f'+ {round(resultado[i].imag,3)}cos({round(omega,3)}t) V'
+        print(função)

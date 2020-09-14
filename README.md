@@ -3,8 +3,8 @@
 Este guia visa descrever o funcionamento do programa que resolve a netlist formatada estilo _SPICE_ de um circuito
 
 ## Escrita da netlist
-O programa ceDC.py possui suporte para resolver circuitos compostos por resistores e fontes de corrente (controladas ou independentes). O programa ceAC.py adiciona suporte para capacitores, indutores e fontes AC
-É possível utilizar uma netlist vinda diretamente de um programa que utilize _PSPICE_, desde que os nós sejam numerados, ou seja, sejam designados por um int.
+O programa ceAC.py possui suporte para resolver circuitos compostos por resistores e fontes de corrente (controladas ou independentes), capacitores, indutores e fontes AC senoidais
+É possível utilizar uma netlist vinda diretamente de um programa que utilize _PSPICE_
 Caso seja necessário montar o circuito manualmente, os padrões são os seguintes:
 **Resistor:**
   R1 <nó 1> <nó 2> <valor da resistência>
