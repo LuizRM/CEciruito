@@ -86,4 +86,3 @@ resultado =  matmul(linalg.inv(mat_G), mat_i)
 print("Resultados---------------------------------------")
 for i in range(len(resultado)):
     print(f'V({i+1}): {resultado[i]} V')
-
