@@ -92,6 +92,10 @@ for i in range(len(netlist)):
         mat_i[origem][0] += -float(netlist[i][iS["corrente"]])
         mat_i[destino][0] += float(netlist[i][iS["corrente"]])
     if(dis[0] == 'V'):
+        if re.search("^SIN", netlist[i][iS["corrente"]]):
+            netlist[i][iS["corrente"]] = netlist[i][4]
+        if re.search("^DC", netlist[i][iS["corrente"]]):
+            netlist[i][iS["corrente"]] = netlist[i][4]
         horizontal = zeros((1,dimensao+1))
         vertical = zeros((dimensao+2,1))
         dimensao +=1
@@ -99,10 +103,9 @@ for i in range(len(netlist)):
         horizontal[0,destino] += 1
         vertical[origem,0] += 1
         vertical[destino,0] += -1
-        print(horizontal)
         mat_G = append(mat_G, horizontal, axis=0)
         mat_G = append(mat_G, vertical, axis=1)
-        mat_i = append(mat_i,array([[-float(multiplica(netlist[i][VALOR+1]))]]),axis=0)
+        mat_i = append(mat_i,array([[-float(multiplica(netlist[i][iS["corrente"]]))]]),axis=0)
     if(dis[0] == 'C'):
         mat_G[origem][origem] += float(multiplica(netlist[i][VALOR]))*1j*omega
         mat_G[origem][destino] += -float(multiplica(netlist[i][VALOR]))*1j*omega
