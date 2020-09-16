@@ -1,5 +1,5 @@
 from numpy import linalg, array, matmul, zeros, append
-from sys import argv
+from sys import argv, exit
 from math import pi,sqrt
 import string
 import re
@@ -60,19 +60,20 @@ while not arquivo_aberto:
         arquivo_aberto = True
 
 #leitura do arquivo e formatação das linhas
+print("Fetching data from netlist file...")
 netlist = file.readlines()
 file.close()
 netlist  = [i.split(' ') for i in netlist]
 
 dimensao, nomes_nos = conta_nos(netlist)
-print(dimensao)
 omega = encontra_omega(netlist)
 mat_G = zeros((dimensao+1,dimensao+1),dtype=complex) #adiciona-se 1 para compensar a linha e a coluna 0 serem excluídas
 mat_i = zeros((dimensao+1,1),dtype=complex)
+print("Reading netlist...")
 for i in range(len(netlist)):
     if netlist[i][-1][-1] == '\n':          #retira o '\n' do final das linhas para evitar erros de leitura
         netlist[i][-1] = netlist[i][-1][:-1]
-        
+
     dis = netlist[i][DISPOSITIVO]
     origem = nomes_nos[netlist[i][NO_INICIAL]] #retorna um número correspondente do nó
     destino = nomes_nos[netlist[i][NO_FINAL]]
@@ -180,16 +181,23 @@ for i in range(len(netlist)):
         mat_G = append(mat_G, horizontal, axis=0)
         mat_G = append(mat_G, vertical, axis=1)
         mat_i = append(mat_i,array([[0]]),axis=0)
-        
 
-#Converte as matrizes para arrays do numpy
-#e exclui a linha e a coluna do nó GND (nó 0)
+
+#Exclui a linha e a coluna do nó GND (nó 0)
+print("Netlist read!")
 mat_G = mat_G[1:,1:]
 mat_i = mat_i[1:,0]
 del nomes_nos['0']
+# if(linalg.det(mat_G)==0):
+#     exit("Singular matrix! Check your netlist for non-closed circuits.")
 
-resultado =  matmul(linalg.inv(mat_G), mat_i)
-print("Resultados---------------------------------------")
+print("Calculating matrices...")
+try:
+    resultado =  matmul(linalg.inv(mat_G), mat_i)
+except linalg.LinAlgError:
+    exit("Singular matrix! Check your netlist.")
+
+print("Results---------------------------------------")
 if(omega == 0):
     for i in nomes_nos:
         print(f'V({i}): {round(resultado[nomes_nos[i]-1].real,4)} V')
