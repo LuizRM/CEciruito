@@ -1,4 +1,4 @@
-from numpy import linalg, array, matmul
+from numpy import linalg, array, matmul, zeros, append
 from sys import argv
 from math import pi,sqrt
 import string
@@ -28,15 +28,6 @@ def conta_nos(lista):
             numero_nos += 1
             nos[lista[i][NO_FINAL]] = numero_nos
     return numero_nos, nos
-
-def cria_matriz(linhas, colunas):
-    matriz = []
-    for i in range(linhas):
-        linha = []
-        for i in range(colunas):
-            linha.append(0)
-        matriz.append(linha)
-    return matriz
 
 #trata casos de valores como por exemplo "1k, 500m"
 def multiplica(valor):
@@ -74,9 +65,10 @@ file.close()
 netlist  = [i.split(' ') for i in netlist]
 
 dimensao, nomes_nos = conta_nos(netlist)
+print(dimensao)
 omega = encontra_omega(netlist)
-mat_G = cria_matriz(dimensao+1,dimensao+1) #adiciona-se 1 para compensar a linha e a coluna 0 serem excluídas
-mat_i = cria_matriz(dimensao+1,1)
+mat_G = zeros((dimensao+1,dimensao+1),dtype=complex) #adiciona-se 1 para compensar a linha e a coluna 0 serem excluídas
+mat_i = zeros((dimensao+1,1),dtype=complex)
 for i in range(len(netlist)):
     if netlist[i][-1][-1] == '\n':          #retira o '\n' do final das linhas para evitar erros de leitura
         netlist[i][-1] = netlist[i][-1][:-1]
@@ -94,16 +86,23 @@ for i in range(len(netlist)):
     if (dis[0] == 'I'):
         if re.search("^SIN", netlist[i][iS["corrente"]]):
             netlist[i][iS["corrente"]] = netlist[i][4]
+        if re.search("^DC", netlist[i][iS["corrente"]]):
+            netlist[i][iS["corrente"]] = netlist[i][4]
         netlist[i][iS["corrente"]] = multiplica(netlist[i][iS["corrente"]])
         mat_i[origem][0] += -float(netlist[i][iS["corrente"]])
         mat_i[destino][0] += float(netlist[i][iS["corrente"]])
-    if(dis[0] == 'G'):
-        referenciaPos = nomes_nos[netlist[i][REFP]]
-        referenciaNeg = nomes_nos[netlist[i][REFN]]
-        mat_G[origem][referenciaPos] += float(netlist[i][icDC["transc"]])
-        mat_G[origem][referenciaNeg] += -float(netlist[i][icDC["transc"]])
-        mat_G[destino][referenciaPos] += -float(netlist[i][icDC["transc"]])
-        mat_G[destino][referenciaNeg] += float(netlist[i][icDC["transc"]])
+    if(dis[0] == 'V'):
+        horizontal = zeros((1,dimensao+1))
+        vertical = zeros((dimensao+2,1))
+        dimensao +=1
+        horizontal[0,origem] += -1
+        horizontal[0,destino] += 1
+        vertical[origem,0] += 1
+        vertical[destino,0] += -1
+        print(horizontal)
+        mat_G = append(mat_G, horizontal, axis=0)
+        mat_G = append(mat_G, vertical, axis=1)
+        mat_i = append(mat_i,array([[-float(multiplica(netlist[i][VALOR+1]))]]),axis=0)
     if(dis[0] == 'C'):
         mat_G[origem][origem] += float(multiplica(netlist[i][VALOR]))*1j*omega
         mat_G[origem][destino] += -float(multiplica(netlist[i][VALOR]))*1j*omega
@@ -114,22 +113,86 @@ for i in range(len(netlist)):
         mat_G[origem][destino] += -1/(float(multiplica(netlist[i][VALOR]))*1j*omega)
         mat_G[destino][origem] += -1/(float(multiplica(netlist[i][VALOR]))*1j*omega)
         mat_G[destino][destino] += 1/(float(multiplica(netlist[i][VALOR]))*1j*omega)
+    if(dis[0] == 'G'):
+        referenciaPos = nomes_nos[netlist[i][REFP]]
+        referenciaNeg = nomes_nos[netlist[i][REFN]]
+        mat_G[origem][referenciaPos] += float(netlist[i][icDC["transc"]])
+        mat_G[origem][referenciaNeg] += -float(netlist[i][icDC["transc"]])
+        mat_G[destino][referenciaPos] += -float(netlist[i][icDC["transc"]])
+        mat_G[destino][referenciaNeg] += float(netlist[i][icDC["transc"]])
+    if(dis[0] == 'E'):
+        referenciaPos = nomes_nos[netlist[i][REFP]]
+        referenciaNeg = nomes_nos[netlist[i][REFN]]
+        ganho = float(netlist[i][icDC["transc"]])
+        horizontal = zeros((1,dimensao+1))
+        vertical = zeros((dimensao+2,1))
+        dimensao += 1
+        horizontal[0,referenciaPos] += ganho
+        horizontal[0,referenciaNeg] += -ganho
+        horizontal[0,origem] += -1
+        horizontal[0,destino] += 1
+        vertical[origem,0] += 1
+        vertical[destino,0] += -1
+        mat_G = append(mat_G, horizontal, axis=0)
+        mat_G = append(mat_G, vertical, axis=1)
+        mat_i = append(mat_i,array([[0]]),axis=0)
+    if(dis[0] == 'F'):
+        referenciaPos = nomes_nos[netlist[i][REFP]]
+        referenciaNeg = nomes_nos[netlist[i][REFN]]
+        ganho = float(netlist[i][icDC["transc"]])
+        horizontal = zeros((1,dimensao+1))
+        vertical = zeros((dimensao+2,1))
+        dimensao += 1
+        vertical[referenciaPos,0] += 1
+        vertical[referenciaNeg,0] += -1
+        vertical[origem,0] += ganho
+        vertical[destino,0] += -ganho
+        horizontal[0,referenciaPos] += -1
+        horizontal[0,referenciaNeg] += 1
+        mat_G = append(mat_G, horizontal, axis=0)
+        mat_G = append(mat_G, vertical, axis=1)
+        mat_i = append(mat_i,array([[0]]),axis=0)
+    if(dis[0] == 'H'):
+        referenciaPos = nomes_nos[netlist[i][REFP]]
+        referenciaNeg = nomes_nos[netlist[i][REFN]]
+        ganho = float(netlist[i][icDC["transc"]])
+        horizontal = zeros((1,dimensao+1))
+        vertical = zeros((dimensao+2,1))
+        dimensao += 1
+        horizontal[0,referenciaPos] += -1
+        horizontal[0,referenciaNeg] += 1
+        vertical[referenciaPos,0] += 1
+        vertical[referenciaNeg,0] += -1
+        mat_G = append(mat_G, horizontal, axis=0)
+        mat_G = append(mat_G, vertical, axis=1)
+        mat_i = append(mat_i,array([[0]]),axis=0)
+        horizontal = zeros((1,dimensao+1))
+        vertical = zeros((dimensao+2,1))
+        dimensao += 1
+        horizontal[0,origem] += -1
+        horizontal[0,destino] += 1
+        horizontal[0,-1] += ganho
+        vertical[origem,0] += 1
+        vertical[destino,0] += -1
+        mat_G = append(mat_G, horizontal, axis=0)
+        mat_G = append(mat_G, vertical, axis=1)
+        mat_i = append(mat_i,array([[0]]),axis=0)
+        
 
 #Converte as matrizes para arrays do numpy
 #e exclui a linha e a coluna do nó GND (nó 0)
-mat_G = array(mat_G)
 mat_G = mat_G[1:,1:]
-mat_i = array(mat_i)
 mat_i = mat_i[1:,0]
+del nomes_nos['0']
 
 resultado =  matmul(linalg.inv(mat_G), mat_i)
 print("Resultados---------------------------------------")
 if(omega == 0):
-    for i in range(len(resultado)):
-        print(f'V({i+1}): {round(resultado[i],4)} V')
+    for i in nomes_nos:
+        print(f'V({i}): {round(resultado[nomes_nos[i]-1].real,4)} V')
 else:
-    for i in range(len(resultado)):
-        função = f'V({i+1}): {round(resultado[i].real,3)}sin({round(omega,3)}t)'
-        if (resultado[i].imag != 0.0):
-            função +=  f'+ {round(resultado[i].imag,3)}cos({round(omega,3)}t) V'
+    for i in nomes_nos:
+        função = f'V({i}): {round(resultado[nomes_nos[i]-1].real,3)}sin({round(omega,3)}t)'
+        if (resultado[nomes_nos[i]-1].imag != 0.0):
+            função +=  f'+ {round(resultado[nomes_nos[i]-1].imag,3)}cos({round(omega,3)}t) V'
         print(função)
