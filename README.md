@@ -12,8 +12,17 @@ Caso seja necessário montar o circuito manualmente, os padrões são os seguint
 **Fonte de corrente DC:**
   I1 <nó de saída de corrente> <nó destino da corrente> <valor da corrente>
 
-**Fonte de corrente controlada DC:**
-  G1 <nó de saída de corrente> <nó destino da corrente> <nó de referência> <valor da corrente>
+**Fonte de corrente controlada por tensão:**
+  G1 <nó de saída de corrente> <nó destino da corrente> <nó de referência+> <nó de referência -> <valor do ganho>
+  
+**Fonte de corrente controlada por corrente**
+  F1 <nó de saída de corrente> <nó destino da corrente> <nó de referência+> <nó de referência -> <valor do ganho>
+  
+**Fonte de tensão controlada por tensão**
+  E1 <nó positivo> <nó negativo> <nó de referência+> <nó de referência -> <valor do ganho>
+  
+**Fonte de tensão controlada por corrente**
+  H1 <nó positivo> <nó negativo> <nó de referência+> <nó de referência -> <valor do ganho>
 
 **Capacitor:**
   C1 <nó 1> <nó 2> <valor da capacitância>
@@ -26,9 +35,16 @@ Caso seja necessário montar o circuito manualmente, os padrões são os seguint
 
 **Exemplo**
 I1 0 1 500m
+
 R1 2 1 1
+
 R2 5 2 2.3k
+
 R3 3 2 2k
+
 R6 0 4 1000
+
 C1 3 5 10µ
+
 L1 3 4 10µ
+
