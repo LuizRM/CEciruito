@@ -67,6 +67,7 @@ netlist  = [i.split(' ') for i in netlist]
 
 dimensao, nomes_nos = conta_nos(netlist)
 omega = encontra_omega(netlist)
+#Cria as matrizes G e i
 mat_G = zeros((dimensao+1,dimensao+1),dtype=complex) #adiciona-se 1 para compensar a linha e a coluna 0 serem excluídas
 mat_i = zeros((dimensao+1,1),dtype=complex)
 print("Reading netlist...")
@@ -74,7 +75,7 @@ for i in range(len(netlist)):
     if netlist[i][-1][-1] == '\n':          #retira o '\n' do final das linhas para evitar erros de leitura
         netlist[i][-1] = netlist[i][-1][:-1]
 
-    dis = netlist[i][DISPOSITIVO]
+    dis = netlist[i][DISPOSITIVO]   #Pega o nome do dispositivo
     origem = nomes_nos[netlist[i][NO_INICIAL]] #retorna um número correspondente do nó
     destino = nomes_nos[netlist[i][NO_FINAL]]
     #identificação do tipo de dispostivo e o adiciona às matrizes de acordo com sua estampa
@@ -85,13 +86,13 @@ for i in range(len(netlist)):
         mat_G[destino][origem] += -1/float(netlist[i][resistor["resistencia"]])
         mat_G[destino][destino] += 1/float(netlist[i][resistor["resistencia"]])
     if (dis[0] == 'I'):
-        if re.search("^SIN", netlist[i][iS["corrente"]]):
+        if re.search("^SIN", netlist[i][iS["corrente"]]): #Se for uma corrente senoidal
             netlist[i][iS["corrente"]] = netlist[i][4]
         if re.search("^DC", netlist[i][iS["corrente"]]):
             netlist[i][iS["corrente"]] = netlist[i][4]
         netlist[i][iS["corrente"]] = multiplica(netlist[i][iS["corrente"]])
-        mat_i[origem][0] += -float(netlist[i][iS["corrente"]])
-        mat_i[destino][0] += float(netlist[i][iS["corrente"]])
+        mat_i[origem][0] += -float(netlist[i][iS["corrente"]])*(-1j)
+        mat_i[destino][0] += float(netlist[i][iS["corrente"]])*(-1j)
     if(dis[0] == 'V'):
         if re.search("^SIN", netlist[i][iS["corrente"]]):
             netlist[i][iS["corrente"]] = netlist[i][4]
@@ -183,8 +184,8 @@ for i in range(len(netlist)):
         mat_i = append(mat_i,array([[0]]),axis=0)
 
 
-#Exclui a linha e a coluna do nó GND (nó 0)
 print("Netlist read!")
+#Exclui a linha e a coluna do nó GND (nó 0)
 mat_G = mat_G[1:,1:]
 mat_i = mat_i[1:,0]
 del nomes_nos['0']
@@ -198,12 +199,12 @@ except linalg.LinAlgError:
     exit("Singular matrix! Check your netlist.")
 
 print("Results---------------------------------------")
-if(omega == 0):
+if(omega == 0): #Se for um circuito DC
     for i in nomes_nos:
         print(f'V({i}): {round(resultado[nomes_nos[i]-1].real,4)} V')
 else:
     for i in nomes_nos:
-        função = f'V({i}): {round(resultado[nomes_nos[i]-1].real,3)}sin({round(omega,3)}t)'
+        função = f'V({i}): {round(resultado[nomes_nos[i]-1].real,3)}cos({round(omega,3)}t)'
         if (resultado[nomes_nos[i]-1].imag != 0.0):
-            função +=  f'+ {round(resultado[nomes_nos[i]-1].imag,3)}cos({round(omega,3)}t) V'
+            função +=  f'+ {round(resultado[nomes_nos[i]-1].imag,3)}sin({round(omega,3)}t) V'
         print(função)
