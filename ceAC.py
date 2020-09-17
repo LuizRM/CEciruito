@@ -87,12 +87,12 @@ for i in range(len(netlist)):
         mat_G[destino][destino] += 1/float(netlist[i][resistor["resistencia"]])
     if (dis[0] == 'I'):
         if re.search("^SIN", netlist[i][iS["corrente"]]): #Se for uma corrente senoidal
-            netlist[i][iS["corrente"]] = netlist[i][4]
+            netlist[i][iS["corrente"]] = netlist[i][4]*(-1j)
         if re.search("^DC", netlist[i][iS["corrente"]]):
             netlist[i][iS["corrente"]] = netlist[i][4]
         netlist[i][iS["corrente"]] = multiplica(netlist[i][iS["corrente"]])
-        mat_i[origem][0] += -float(netlist[i][iS["corrente"]])*(-1j)
-        mat_i[destino][0] += float(netlist[i][iS["corrente"]])*(-1j)
+        mat_i[origem][0] += -float(netlist[i][iS["corrente"]])
+        mat_i[destino][0] += float(netlist[i][iS["corrente"]])
     if(dis[0] == 'V'):
         if re.search("^SIN", netlist[i][iS["corrente"]]):
             netlist[i][iS["corrente"]] = netlist[i][4]
