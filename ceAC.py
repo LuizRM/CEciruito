@@ -34,7 +34,7 @@ def multiplica(valor):
     if (valor[-1] in multiplicadores):
         return float(valor[:-1]) * multiplicadores[valor[-1]]
     else:
-        return valor
+        return float(valor)
 
 #verifica se existe alguma fonte senoidal e guarda a frequência
 def encontra_omega(lista):
@@ -87,17 +87,20 @@ for i in range(len(netlist)):
         mat_G[destino][destino] += 1/float(netlist[i][resistor["resistencia"]])
     if (dis[0] == 'I'):
         if re.search("^SIN", netlist[i][iS["corrente"]]): #Se for uma corrente senoidal
-            netlist[i][iS["corrente"]] = netlist[i][4]*(-1j)
-        if re.search("^DC", netlist[i][iS["corrente"]]):
-            netlist[i][iS["corrente"]] = netlist[i][4]
-        netlist[i][iS["corrente"]] = multiplica(netlist[i][iS["corrente"]])
-        mat_i[origem][0] += -float(netlist[i][iS["corrente"]])
-        mat_i[destino][0] += float(netlist[i][iS["corrente"]])
+            netlist[i][iS["corrente"]] = multiplica(netlist[i][4])*(-1j)
+        elif re.search("^DC", netlist[i][iS["corrente"]]):
+            netlist[i][iS["corrente"]] = multiplica(netlist[i][4])
+        else:
+            netlist[i][iS["corrente"]] = multiplica(netlist[i][iS["corrente"]])
+        mat_i[origem][0] += -netlist[i][iS["corrente"]]
+        mat_i[destino][0] += netlist[i][iS["corrente"]]
     if(dis[0] == 'V'):
-        if re.search("^SIN", netlist[i][iS["corrente"]]):
-            netlist[i][iS["corrente"]] = netlist[i][4]
-        if re.search("^DC", netlist[i][iS["corrente"]]):
-            netlist[i][iS["corrente"]] = netlist[i][4]
+        if re.search("^SIN", netlist[i][iS["corrente"]]): #Se for uma corrente senoidal
+            netlist[i][iS["corrente"]] = multiplica(netlist[i][4])*(-1j)
+        elif re.search("^DC", netlist[i][iS["corrente"]]):
+            netlist[i][iS["corrente"]] = multiplica(netlist[i][4])
+        else:
+            netlist[i][iS["corrente"]] = multiplica(netlist[i][iS["corrente"]])
         horizontal = zeros((1,dimensao+1))
         vertical = zeros((dimensao+2,1))
         dimensao +=1
@@ -107,17 +110,17 @@ for i in range(len(netlist)):
         vertical[destino,0] += -1
         mat_G = append(mat_G, horizontal, axis=0)
         mat_G = append(mat_G, vertical, axis=1)
-        mat_i = append(mat_i,array([[-float(multiplica(netlist[i][iS["corrente"]]))]]),axis=0)
+        mat_i = append(mat_i,array([[-netlist[i][iS["corrente"]]]]),axis=0)
     if(dis[0] == 'C'):
-        mat_G[origem][origem] += float(multiplica(netlist[i][VALOR]))*1j*omega
-        mat_G[origem][destino] += -float(multiplica(netlist[i][VALOR]))*1j*omega
-        mat_G[destino][origem] += -float(multiplica(netlist[i][VALOR]))*1j*omega
-        mat_G[destino][destino] += float(multiplica(netlist[i][VALOR]))*1j*omega
+        mat_G[origem][origem] += multiplica(netlist[i][VALOR])*1j*omega
+        mat_G[origem][destino] += -multiplica(netlist[i][VALOR])*1j*omega
+        mat_G[destino][origem] += -multiplica(netlist[i][VALOR])*1j*omega
+        mat_G[destino][destino] += multiplica(netlist[i][VALOR])*1j*omega
     if(dis[0] == 'L'):
-        mat_G[origem][origem] += 1/(float(multiplica(netlist[i][VALOR]))*1j*omega)
-        mat_G[origem][destino] += -1/(float(multiplica(netlist[i][VALOR]))*1j*omega)
-        mat_G[destino][origem] += -1/(float(multiplica(netlist[i][VALOR]))*1j*omega)
-        mat_G[destino][destino] += 1/(float(multiplica(netlist[i][VALOR]))*1j*omega)
+        mat_G[origem][origem] += 1/(multiplica(netlist[i][VALOR])*1j*omega)
+        mat_G[origem][destino] += -1/(multiplica(netlist[i][VALOR])*1j*omega)
+        mat_G[destino][origem] += -1/(multiplica(netlist[i][VALOR])*1j*omega)
+        mat_G[destino][destino] += 1/(multiplica(netlist[i][VALOR])*1j*omega)
     if(dis[0] == 'G'):
         referenciaPos = nomes_nos[netlist[i][REFP]]
         referenciaNeg = nomes_nos[netlist[i][REFN]]
@@ -204,7 +207,8 @@ if(omega == 0): #Se for um circuito DC
         print(f'V({i}): {round(resultado[nomes_nos[i]-1].real,4)} V')
 else:
     for i in nomes_nos:
-        função = f'V({i}): {round(resultado[nomes_nos[i]-1].real,3)}cos({round(omega,3)}t)'
-        if (resultado[nomes_nos[i]-1].imag != 0.0):
-            função +=  f'+ {round(resultado[nomes_nos[i]-1].imag,3)}sin({round(omega,3)}t) V'
+        função = f'V({i}): {round(-(resultado[nomes_nos[i]-1].imag),5)}sin({round(omega,3)}t)'
+        if (resultado[nomes_nos[i]-1].real != 0.0):
+            função += " %+f" % round(resultado[nomes_nos[i]-1].real,5)
+            função +=  f'cos({round(omega,3)}t) V'
         print(função)
