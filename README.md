@@ -31,7 +31,7 @@ Caso seja necessário montar o circuito manualmente, os padrões são os seguint
   L1 <nó 1> <nó 2> <valor da indutância>
 
 **Fonte de corrente AC:**
-  I1 <nó de saída de corrente> <nó destino da corrente> SIN(0 <amplitude de corrente> <frequencia em Hz)
+  I1 <nó de saída de corrente> <nó destino da corrente> SIN(0 <amplitude de corrente> <frequencia em rad/s>)
 
 **Amplificador Operacional:**
   O <vo1> <vo2> <vi1> <vi2>

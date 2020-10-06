@@ -4,6 +4,7 @@ from sys import argv, exit
 from math import pi,sqrt
 import string
 import re
+import os
 
 #definição de constantes
 DISPOSITIVO = 0
@@ -67,6 +68,8 @@ while not arquivo_aberto:
 print("Fetching data from netlist file...")
 netlist = file.readlines()
 file.close()
+if netlist[-1][0] == '\n':
+    netlist = netlist[:-1]
 netlist  = [i.split(' ') for i in netlist]
 nomes_correntes = {}
 
@@ -254,6 +257,7 @@ try:
 except linalg.LinAlgError:
     exit("Singular matrix! Check your netlist.")
 
+os.system('cls' if os.name == 'nt' else 'clear')
 print("Results---------------------------------------")
 if(omega == 0): #Se for um circuito DC
     for i in nomes_nos:
