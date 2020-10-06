@@ -14,13 +14,13 @@ Caso seja necessário montar o circuito manualmente, os padrões são os seguint
 
 **Fonte de corrente controlada por tensão:**
   G1 <nó de saída de corrente> <nó destino da corrente> <nó de referência+> <nó de referência -> <valor do ganho>
-  
+
 **Fonte de corrente controlada por corrente**
   F1 <nó de saída de corrente> <nó destino da corrente> <nó de referência+> <nó de referência -> <valor do ganho>
-  
+
 **Fonte de tensão controlada por tensão**
   E1 <nó positivo> <nó negativo> <nó de referência+> <nó de referência -> <valor do ganho>
-  
+
 **Fonte de tensão controlada por corrente**
   H1 <nó positivo> <nó negativo> <nó de referência+> <nó de referência -> <valor do ganho>
 
@@ -32,6 +32,9 @@ Caso seja necessário montar o circuito manualmente, os padrões são os seguint
 
 **Fonte de corrente AC:**
   I1 <nó de saída de corrente> <nó destino da corrente> SIN(0 <amplitude de corrente> <frequencia em Hz)
+
+**Amplificador Operacional:**
+  O <vo1> <vo2> <vi1> <vi2>
 
 **Exemplo**
 I1 0 1 500m
@@ -47,4 +50,3 @@ R6 0 4 1000
 C1 3 5 10µ
 
 L1 3 4 10µ
-

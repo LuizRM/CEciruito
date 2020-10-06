@@ -1,3 +1,4 @@
+print("Importing python libraries")
 from numpy import linalg, array, matmul, zeros, append, sqrt
 from sys import argv, exit
 from math import pi,sqrt
@@ -43,7 +44,10 @@ def encontra_omega(lista):
         if re.search("^SIN", lista[i][iS["corrente"]]):
             if netlist[i][-1][-1] == '\n':          #retira o '\n' do final das linhas para evitar erros de leitura
                 netlist[i][-1] = netlist[i][-1][:-1]
-            frequencia = str(lista[i][-1][:-1]) #retira o ')' do final do valor da frequencia
+            if lista[i][-1][-1] == ')':
+                frequencia = str(lista[i][-1][:-1]) #retira o ')' do final do valor da frequencia
+            else:
+                frequencia = str(lista[i][-1])
             frequencia = float(multiplica(frequencia)) #toma a frequencia em radianos
     return frequencia
 
@@ -64,6 +68,7 @@ print("Fetching data from netlist file...")
 netlist = file.readlines()
 file.close()
 netlist  = [i.split(' ') for i in netlist]
+nomes_correntes = {}
 
 dimensao, nomes_nos = conta_nos(netlist)
 omega = encontra_omega(netlist)
@@ -85,7 +90,7 @@ for i in range(len(netlist)):
         mat_G[origem][destino] += -1/float(netlist[i][resistor["resistencia"]])
         mat_G[destino][origem] += -1/float(netlist[i][resistor["resistencia"]])
         mat_G[destino][destino] += 1/float(netlist[i][resistor["resistencia"]])
-    if (dis[0] == 'I'):
+    elif (dis[0] == 'I'):
         if re.search("^SIN", netlist[i][iS["corrente"]]): #Se for uma corrente senoidal
             netlist[i][iS["corrente"]] = multiplica(netlist[i][4])*(-1j)
         elif re.search("^DC", netlist[i][iS["corrente"]]):
@@ -94,7 +99,7 @@ for i in range(len(netlist)):
             netlist[i][iS["corrente"]] = multiplica(netlist[i][iS["corrente"]])
         mat_i[origem][0] += -netlist[i][iS["corrente"]]
         mat_i[destino][0] += netlist[i][iS["corrente"]]
-    if(dis[0] == 'V'):
+    elif(dis[0] == 'V'):
         if re.search("^SIN", netlist[i][iS["corrente"]]): #Se for uma corrente senoidal
             netlist[i][iS["corrente"]] = multiplica(netlist[i][5])*(-1j)
         elif re.search("^DC", netlist[i][iS["corrente"]]):
@@ -103,6 +108,7 @@ for i in range(len(netlist)):
             netlist[i][iS["corrente"]] = multiplica(netlist[i][iS["corrente"]])
         horizontal = zeros((1,dimensao+1))
         vertical = zeros((dimensao+2,1))
+        nomes_correntes[dis] = dimensao
         dimensao +=1
         horizontal[0,origem] += -1
         horizontal[0,destino] += 1
@@ -111,24 +117,24 @@ for i in range(len(netlist)):
         mat_G = append(mat_G, horizontal, axis=0)
         mat_G = append(mat_G, vertical, axis=1)
         mat_i = append(mat_i,array([[-netlist[i][iS["corrente"]]]]),axis=0)
-    if(dis[0] == 'C'):
+    elif(dis[0] == 'C'):
         mat_G[origem][origem] += multiplica(netlist[i][VALOR])*1j*omega
         mat_G[origem][destino] += -multiplica(netlist[i][VALOR])*1j*omega
         mat_G[destino][origem] += -multiplica(netlist[i][VALOR])*1j*omega
         mat_G[destino][destino] += multiplica(netlist[i][VALOR])*1j*omega
-    if(dis[0] == 'L'):
+    elif(dis[0] == 'L'):
         mat_G[origem][origem] += 1/(multiplica(netlist[i][VALOR])*1j*omega)
         mat_G[origem][destino] += -1/(multiplica(netlist[i][VALOR])*1j*omega)
         mat_G[destino][origem] += -1/(multiplica(netlist[i][VALOR])*1j*omega)
         mat_G[destino][destino] += 1/(multiplica(netlist[i][VALOR])*1j*omega)
-    if(dis[0] == 'G'):
+    elif(dis[0] == 'G'):
         referenciaPos = nomes_nos[netlist[i][REFP]]
         referenciaNeg = nomes_nos[netlist[i][REFN]]
         mat_G[origem][referenciaPos] += float(netlist[i][icDC["transc"]])
         mat_G[origem][referenciaNeg] += -float(netlist[i][icDC["transc"]])
         mat_G[destino][referenciaPos] += -float(netlist[i][icDC["transc"]])
         mat_G[destino][referenciaNeg] += float(netlist[i][icDC["transc"]])
-    if(dis[0] == 'E'):
+    elif(dis[0] == 'E'):
         referenciaPos = nomes_nos[netlist[i][REFP]]
         referenciaNeg = nomes_nos[netlist[i][REFN]]
         ganho = float(netlist[i][icDC["transc"]])
@@ -144,7 +150,7 @@ for i in range(len(netlist)):
         mat_G = append(mat_G, horizontal, axis=0)
         mat_G = append(mat_G, vertical, axis=1)
         mat_i = append(mat_i,array([[0]]),axis=0)
-    if(dis[0] == 'F'):
+    elif(dis[0] == 'F'):
         referenciaPos = nomes_nos[netlist[i][REFP]]
         referenciaNeg = nomes_nos[netlist[i][REFN]]
         ganho = float(netlist[i][icDC["transc"]])
@@ -160,7 +166,7 @@ for i in range(len(netlist)):
         mat_G = append(mat_G, horizontal, axis=0)
         mat_G = append(mat_G, vertical, axis=1)
         mat_i = append(mat_i,array([[0]]),axis=0)
-    if(dis[0] == 'H'):
+    elif(dis[0] == 'H'):
         referenciaPos = nomes_nos[netlist[i][REFP]]
         referenciaNeg = nomes_nos[netlist[i][REFN]]
         ganho = float(netlist[i][icDC["transc"]])
@@ -185,7 +191,7 @@ for i in range(len(netlist)):
         mat_G = append(mat_G, horizontal, axis=0)
         mat_G = append(mat_G, vertical, axis=1)
         mat_i = append(mat_i,array([[0]]),axis=0)
-    if(dis[0] == 'X'):
+    elif(dis[0] == 'X'):
         referenciaPos = nomes_nos[netlist[i][4]]
         referenciaNeg = nomes_nos[netlist[i][5]]
         ganho = 1/sqrt(float(netlist[i][3])/float(netlist[i][6]))
@@ -217,6 +223,21 @@ for i in range(len(netlist)):
         mat_G = append(mat_G, horizontal, axis=0)
         mat_G = append(mat_G, vertical, axis=1)
         mat_i = append(mat_i,array([[0]]),axis=0)
+    elif(dis[0] == 'O'):
+        destino = nomes_nos[netlist[i][1]]
+        origem = nomes_nos[netlist[i][2]]
+        referenciaPos = nomes_nos[netlist[i][3]]
+        referenciaNeg = nomes_nos[netlist[i][4]]
+        horizontal = zeros((1,dimensao+1))
+        vertical = zeros((dimensao+2,1))
+        dimensao += 1
+        vertical[destino,0] += 1
+        vertical[origem,0] += -1
+        horizontal[0,referenciaPos] += 1
+        horizontal[0,referenciaNeg] += -1
+        mat_G = append(mat_G, horizontal, axis=0)
+        mat_G = append(mat_G, vertical, axis=1)
+        mat_i = append(mat_i,array([[0]]),axis=0)
 
 
 print("Netlist read!")
@@ -237,10 +258,18 @@ print("Results---------------------------------------")
 if(omega == 0): #Se for um circuito DC
     for i in nomes_nos:
         print(f'V({i}): {round(resultado[nomes_nos[i]-1].real,4)} V')
+    for i in nomes_correntes:
+        print(f'I({i}): {round(resultado[nomes_correntes[i]].real,4)} A')
 else:
     for i in nomes_nos:
         função = f'V({i}): {round(-(resultado[nomes_nos[i]-1].imag),5)}sin({round(omega,3)}t)'
         if (resultado[nomes_nos[i]-1].real != 0.0):
             função += " %+f" % round(resultado[nomes_nos[i]-1].real,5)
+            função +=  f'cos({round(omega,3)}t) V'
+        print(função)
+    for i in nomes_correntes:
+        função = f'I({i}): {round(-(resultado[nomes_correntes[i]].imag),5)}sin({round(omega,3)}t)'
+        if (resultado[nomes_correntes[i]].real != 0.0):
+            função += " %+f" % round(resultado[nomes_correntes[i]].real,5)
             função +=  f'cos({round(omega,3)}t) V'
         print(função)
