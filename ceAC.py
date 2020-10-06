@@ -1,4 +1,4 @@
-from numpy import linalg, array, matmul, zeros, append
+from numpy import linalg, array, matmul, zeros, append, sqrt
 from sys import argv, exit
 from math import pi,sqrt
 import string
@@ -44,7 +44,7 @@ def encontra_omega(lista):
             if netlist[i][-1][-1] == '\n':          #retira o '\n' do final das linhas para evitar erros de leitura
                 netlist[i][-1] = netlist[i][-1][:-1]
             frequencia = str(lista[i][-1][:-1]) #retira o ')' do final do valor da frequencia
-            frequencia = 2*pi*float(multiplica(frequencia)) #toma a frequencia em radianos
+            frequencia = float(multiplica(frequencia)) #toma a frequencia em radianos
     return frequencia
 
 #abertura do arquivo com a netlist
@@ -96,7 +96,7 @@ for i in range(len(netlist)):
         mat_i[destino][0] += netlist[i][iS["corrente"]]
     if(dis[0] == 'V'):
         if re.search("^SIN", netlist[i][iS["corrente"]]): #Se for uma corrente senoidal
-            netlist[i][iS["corrente"]] = multiplica(netlist[i][4])*(-1j)
+            netlist[i][iS["corrente"]] = multiplica(netlist[i][5])*(-1j)
         elif re.search("^DC", netlist[i][iS["corrente"]]):
             netlist[i][iS["corrente"]] = multiplica(netlist[i][4])
         else:
@@ -180,6 +180,38 @@ for i in range(len(netlist)):
         horizontal[0,origem] += -1
         horizontal[0,destino] += 1
         horizontal[0,-1] += ganho
+        vertical[origem,0] += 1
+        vertical[destino,0] += -1
+        mat_G = append(mat_G, horizontal, axis=0)
+        mat_G = append(mat_G, vertical, axis=1)
+        mat_i = append(mat_i,array([[0]]),axis=0)
+    if(dis[0] == 'X'):
+        referenciaPos = nomes_nos[netlist[i][4]]
+        referenciaNeg = nomes_nos[netlist[i][5]]
+        ganho = 1/sqrt(float(netlist[i][3])/float(netlist[i][6]))
+        horizontal = zeros((1,dimensao+1))
+        vertical = zeros((dimensao+2,1))
+        dimensao += 1
+        vertical[referenciaPos,0] += 1
+        vertical[referenciaNeg,0] += -1
+        vertical[origem,0] += ganho
+        vertical[destino,0] += -ganho
+        horizontal[0,referenciaPos] += -1
+        horizontal[0,referenciaNeg] += 1
+        mat_G = append(mat_G, horizontal, axis=0)
+        mat_G = append(mat_G, vertical, axis=1)
+        mat_i = append(mat_i,array([[0]]),axis=0)
+        referenciaPos = origem
+        referenciaNeg = destino
+        origem = nomes_nos[netlist[i][4]]
+        destino = nomes_nos[netlist[i][5]]
+        horizontal = zeros((1,dimensao+1))
+        vertical = zeros((dimensao+2,1))
+        dimensao += 1
+        horizontal[0,referenciaPos] += ganho
+        horizontal[0,referenciaNeg] += -ganho
+        horizontal[0,origem] += -1
+        horizontal[0,destino] += 1
         vertical[origem,0] += 1
         vertical[destino,0] += -1
         mat_G = append(mat_G, horizontal, axis=0)
