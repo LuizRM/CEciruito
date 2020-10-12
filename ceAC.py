@@ -1,7 +1,6 @@
 print("Importing python libraries")
 from numpy import linalg, array, matmul, zeros, append, sqrt
 from sys import argv, exit
-from math import sqrt
 import re
 import os
 
@@ -12,7 +11,7 @@ NO_FINAL = 2
 VALOR = 3
 REFP = 3
 REFN = 4
-multiplicadores = {"n": 0.000000001, "u": 0.000001, "m": 0.001, "k": 1000, "Meg": 1000000}
+multiplicadores = {"n": 0.000000001, "u": 0.000001, "m": 0.001, "k": 1000, "Meg": 1000000, "µ":0.000001}
 resistor = {"no+": 1, "no-": 2, "resistencia": 3}
 iS = {"noS": 1, "noE": 2, "corrente": 3}
 icDC = {"noS": 1, "noE": 2, "ref+": 3, "ref-": 4, "transc": 5}
@@ -102,9 +101,9 @@ for i in range(len(netlist)):
         mat_G[destino][destino] += 1 / float(netlist[i][resistor["resistencia"]])
     elif (dis[0] == 'I'):
         if re.search("^SIN", netlist[i][iS["corrente"]]):  # Se for uma corrente senoidal
-            netlist[i][iS["corrente"]] = multiplica(netlist[i][4]) * (-1j)
+            netlist[i][iS["corrente"]] = multiplica(netlist[i][5]) * (-1j)
         elif re.search("^DC", netlist[i][iS["corrente"]]):
-            netlist[i][iS["corrente"]] = multiplica(netlist[i][4])
+            netlist[i][iS["corrente"]] = multiplica(netlist[i][5])
         else:
             netlist[i][iS["corrente"]] = multiplica(netlist[i][iS["corrente"]])
         mat_i[origem][0] += -netlist[i][iS["corrente"]]
@@ -274,13 +273,13 @@ if (omega == 0):  # Se for um circuito DC
         print(f'I({i}): {round(resultado[nomes_correntes[i]].real, 4)} A')
 else:
     for i in nomes_nos:
-        funcao = f'V({i}): {round(-(resultado[nomes_nos[i] - 1].imag), 5)}sin({round(omega, 3)}t)'
+        funcao = f'V({i}): {round((-resultado[nomes_nos[i] - 1].imag), 5)}sin({round(omega, 3)}t)'
         if resultado[nomes_nos[i] - 1].real != 0.0:
             funcao += " %+f" % round(resultado[nomes_nos[i] - 1].real, 5)
             funcao += f'cos({round(omega, 3)}t) V'
         print(funcao)
     for i in nomes_correntes:
-        funcao = f'I({i}): {round(-(resultado[nomes_correntes[i]].imag), 5)}sin({round(omega, 3)}t)'
+        funcao = f'I({i}): {round((-resultado[nomes_correntes[i]].imag), 5)}sin({round(omega, 3)}t)'
         if (resultado[nomes_correntes[i]].real != 0.0):
             funcao += " %+f" % round(resultado[nomes_correntes[i]].real, 5)
             funcao += f'cos({round(omega, 3)}t) V'
