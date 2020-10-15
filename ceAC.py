@@ -132,10 +132,19 @@ for i in range(len(netlist)):
         mat_G[destino][origem] += -multiplica(netlist[i][VALOR]) * 1j * omega
         mat_G[destino][destino] += multiplica(netlist[i][VALOR]) * 1j * omega
     elif (dis[0] == 'L'):
-        mat_G[origem][origem] += 1 / (multiplica(netlist[i][VALOR]) * 1j * omega)
-        mat_G[origem][destino] += -1 / (multiplica(netlist[i][VALOR]) * 1j * omega)
-        mat_G[destino][origem] += -1 / (multiplica(netlist[i][VALOR]) * 1j * omega)
-        mat_G[destino][destino] += 1 / (multiplica(netlist[i][VALOR]) * 1j * omega)
+        horizontal = zeros((1, dimensao + 1))
+        vertical = zeros((dimensao + 2, 1))
+        nomes_correntes[dis] = dimensao
+        dimensao += 1
+        horizontal[0, origem] += -1
+        horizontal[0, destino] += 1
+        vertical[origem, 0] += 1
+        vertical[destino, 0] += -1
+        vertical = array(vertical)
+        mat_G = append(mat_G, horizontal, axis=0)
+        mat_G = append(mat_G, vertical, axis=1)
+        mat_G[-1,-1] += multiplica(netlist[i][VALOR]) * 1j * omega
+        mat_i = append(mat_i, array([[0]]), axis=0)
     elif (dis[0] == 'G'):
         referenciaPos = nomes_nos[netlist[i][REFP]]
         referenciaNeg = nomes_nos[netlist[i][REFN]]
@@ -209,29 +218,31 @@ for i in range(len(netlist)):
         dimensao += 1
         vertical[referenciaPos, 0] += 1
         vertical[referenciaNeg, 0] += -1
-        vertical[origem, 0] += ganho
-        vertical[destino, 0] += -ganho
+        vertical[origem, 0] += -ganho
+        vertical[destino, 0] += ganho
+        horizontal[0,origem] += ganho
+        horizontal[0,destino] += -ganho
         horizontal[0, referenciaPos] += -1
         horizontal[0, referenciaNeg] += 1
         mat_G = append(mat_G, horizontal, axis=0)
         mat_G = append(mat_G, vertical, axis=1)
         mat_i = append(mat_i, array([[0]]), axis=0)
-        referenciaPos = origem
-        referenciaNeg = destino
-        origem = nomes_nos[netlist[i][4]]
-        destino = nomes_nos[netlist[i][5]]
-        horizontal = zeros((1, dimensao + 1))
-        vertical = zeros((dimensao + 2, 1))
-        dimensao += 1
-        horizontal[0, referenciaPos] += ganho
-        horizontal[0, referenciaNeg] += -ganho
-        horizontal[0, origem] += -1
-        horizontal[0, destino] += 1
-        vertical[origem, 0] += 1
-        vertical[destino, 0] += -1
-        mat_G = append(mat_G, horizontal, axis=0)
-        mat_G = append(mat_G, vertical, axis=1)
-        mat_i = append(mat_i, array([[0]]), axis=0)
+        #referenciaPos = origem
+        #referenciaNeg = destino
+        #origem = nomes_nos[netlist[i][4]]
+        #destino = nomes_nos[netlist[i][5]]
+        #horizontal = zeros((1, dimensao + 1))
+        #vertical = zeros((dimensao + 2, 1))
+        #dimensao += 1
+        #horizontal[0, referenciaPos] += ganho
+        #horizontal[0, referenciaNeg] += -ganho
+        #horizontal[0, origem] += -1
+        #horizontal[0, destino] += 1
+        #vertical[origem, 0] += 1
+        #vertical[destino, 0] += -1
+        #mat_G = append(mat_G, horizontal, axis=0)
+        #mat_G = append(mat_G, vertical, axis=1)
+        #mat_i = append(mat_i, array([[0]]), axis=0)
     elif (dis[0] == 'O'):
         destino = nomes_nos[netlist[i][1]]
         origem = nomes_nos[netlist[i][2]]
@@ -258,6 +269,7 @@ del nomes_nos['0']
 
 print("Calculating matrices...")
 resultado = 0
+print(mat_G)
 try:
     resultado = matmul(linalg.inv(mat_G), mat_i)
 except linalg.LinAlgError:
@@ -282,5 +294,5 @@ else:
         funcao = f'I({i}): {round((-resultado[nomes_correntes[i]].imag), 5)}sin({round(omega, 3)}t)'
         if (resultado[nomes_correntes[i]].real != 0.0):
             funcao += " %+f" % round(resultado[nomes_correntes[i]].real, 5)
-            funcao += f'cos({round(omega, 3)}t) V'
+            funcao += f'cos({round(omega, 3)}t) A'
         print(funcao)
